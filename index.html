@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>분리수거 챌린지</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef6f0;--card:#fff;--ink:#17332b;--sub:#4d6a60;--line:#cfe0d6;--ok:#1f9d63;--no:#d64545;
+--paper:#3b82c4;--plastic:#e39a25;--glass:#2f9e77;--can:#7b828c;--trash:#4a4a4a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10201a;--card:#1a2f27;--ink:#e6f3ec;--sub:#9db8ac;--line:#2c4a3f}}
+:root[data-theme="dark"]{--bg:#10201a;--card:#1a2f27;--ink:#e6f3ec;--sub:#9db8ac;--line:#2c4a3f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.6}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1,h2,.big{font-family:'Jua','Noto Sans KR',sans-serif;font-weight:400}
+h1{font-size:clamp(1.3rem,6.2vw,2rem);margin:8px 0;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+button{font:inherit;cursor:pointer;border:0}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.start{background:var(--ok);color:#fff;border-radius:14px;padding:14px 24px;font-size:1.1rem;font-weight:700;width:100%;margin-top:12px}
+.gauge{height:16px;background:var(--line);border-radius:8px;overflow:hidden;margin:6px 0 2px}
+.gauge i{display:block;height:100%;width:50%;background:var(--ok);transition:width .4s,background .4s}
+.meta{display:flex;justify-content:space-between;font-size:.9rem;color:var(--sub)}
+.item{text-align:center;padding:24px 12px}
+.item .em{font-size:5rem;line-height:1.1}
+.item .big{font-size:1.6rem}
+.bins{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px}
+.bin{grid-column:span 2;color:#fff;border-radius:14px;padding:14px 4px;font-weight:700;font-size:1rem;min-height:64px}
+.bin:nth-child(n+4){grid-column:span 3}
+.bin span{display:block;font-size:1.6rem}
+.bin:disabled{opacity:.45;cursor:default}
+.fb{margin-top:14px;padding:14px;border-radius:14px;border:2px solid var(--line)}
+.fb.ok{border-color:var(--ok)}.fb.no{border-color:var(--no)}
+.fb b{font-size:1.05rem}
+.next{background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 20px;margin-top:10px;font-weight:700}
+ul{padding-left:20px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<section id="home" class="card">
+  <h1>♻️ 분리수거 챌린지</h1>
+  <p>쓰레기가 하나씩 나와요. 알맞은 분리수거함을 골라 <b>지구 건강 게이지</b>를 지켜 주세요!</p>
+  <ul><li>총 10문제, 맞히면 게이지 +10</li><li>틀리면 게이지 −10</li><li>정답 뒤에는 과학 상식이 나와요</li></ul>
+  <button class="start" onclick="start()">게임 시작</button>
+</section>
+
+<section id="game" class="hide">
+  <div class="meta"><span id="q">1 / 10</span><span id="sc">점수 0</span></div>
+  <div class="gauge" aria-label="지구 건강 게이지"><i id="g"></i></div>
+  <div class="meta"><span>🌍 지구 건강</span><span id="combo"></span></div>
+  <div class="card item" style="margin-top:12px"><div class="em" id="em"></div><div class="big" id="nm"></div></div>
+  <div class="bins" id="bins"></div>
+  <div class="fb hide" id="fb"><b id="res"></b><p id="why" style="margin:6px 0 0"></p><button class="next" id="nx" onclick="next()">다음 문제</button></div>
+</section>
+
+<section id="end" class="card hide">
+  <h2 id="title" style="font-size:1.8rem;margin:0"></h2>
+  <p id="sum"></p>
+  <p><b>기억할 점</b></p>
+  <ul>
+    <li>재활용은 자원과 에너지를 아끼고 쓰레기 매립·소각량을 줄여 줘요.</li>
+    <li>내용물을 비우고 헹구는 것이 재활용의 첫걸음이에요.</li>
+    <li>음식물·기름에 오염된 것은 재활용 자원을 망칠 수 있어요.</li>
+  </ul>
+  <button class="start" onclick="start()">다시 도전</button>
+</section>
+</main>
+<script>
+const B={paper:['종이','📄','--paper'],plastic:['플라스틱','🧴','--plastic'],glass:['유리','🍾','--glass'],can:['캔·고철','🥫','--can'],trash:['일반쓰레기','🗑️','--trash']};
+const ITEMS=[
+['🧴','페트병','plastic','라벨을 떼고 헹궈 배출해요. 페트병은 재활용하면 옷의 섬유 원료가 되기도 해요.'],
+['📰','신문지','paper','종이 1톤을 재활용하면 나무 약 17그루를 아낄 수 있다고 알려져 있어요.'],
+['🍾','유리병','glass','유리는 품질이 거의 떨어지지 않아 녹여서 계속 다시 만들 수 있어요.'],
+['🥫','참치 캔','can','알루미늄·철 캔은 새로 만들 때보다 재활용할 때 에너지가 훨씬 적게 들어요.'],
+['🥛','우유팩','paper','헹구고 펼쳐서 종이팩으로 모으면 고급 화장지 원료가 돼요.'],
+['🍟','과자 봉지','plastic','비닐류는 플라스틱 재활용품이에요. 이물질을 털어 내고 배출해요.'],
+['🍽️','깨진 도자기 접시','trash','도자기는 유리와 녹는점이 달라 섞이면 재활용 유리에 불량이 생겨요. 일반쓰레기예요.'],
+['📦','택배 상자','paper','테이프와 송장을 떼고 펼쳐서 배출하면 종이 원료로 다시 쓸 수 있어요.'],
+['🍕','기름 묻은 피자 박스','trash','기름과 음식물에 오염된 종이는 물에 풀어도 깨끗해지지 않아 재활용이 어려워요.'],
+['🧻','사용한 휴지','trash','휴지는 이미 섬유가 짧고 오염돼 있어서 종이 재활용이 안 돼요.'],
+['🥤','플라스틱 컵','plastic','내용물을 비우고 헹궈서 배출해요. 재질별로 나뉘어 새 제품이 돼요.'],
+['🪞','깨진 거울','trash','거울은 유리 위에 금속 코팅이 있어 유리병과 성분이 달라요. 일반쓰레기예요.']
+];
+let list,i,score,health,streak,done;
+const $=id=>document.getElementById(id);
+function show(id){['home','game','end'].forEach(s=>$(s).classList.toggle('hide',s!==id))}
+function start(){list=[...ITEMS].sort(()=>Math.random()-.5).slice(0,10);i=0;score=0;health=50;streak=0;show('game');render()}
+function render(){
+  done=false;const it=list[i];
+  $('q').textContent=(i+1)+' / 10';$('sc').textContent='점수 '+score;
+  $('em').textContent=it[0];$('nm').textContent=it[1];
+  $('fb').classList.add('hide');
+  $('combo').textContent=streak>1?'🔥 '+streak+'연속!':'';
+  const g=$('g');g.style.width=health+'%';g.style.background=health<30?'var(--no)':'var(--ok)';
+  $('bins').innerHTML=Object.entries(B).map(([k,v])=>`<button class="bin" style="background:var(${v[2]})" onclick="pick('${k}')"><span>${v[1]}</span>${v[0]}</button>`).join('');
+}
+function pick(k){
+  if(done)return;done=true;const it=list[i],ok=k===it[2];
+  if(ok){score+=10;health=Math.min(100,health+10);streak++}else{health=Math.max(0,health-10);streak=0}
+  $('g').style.width=health+'%';$('g').style.background=health<30?'var(--no)':'var(--ok)';
+  $('sc').textContent='점수 '+score;
+  const fb=$('fb');fb.className='fb '+(ok?'ok':'no');
+  $('res').textContent=ok?'✅ 정답!':'❌ 정답은 「'+B[it[2]][0]+'」';
+  $('why').textContent=it[3];
+  $('nx').textContent=i===9?'결과 보기':'다음 문제';
+  document.querySelectorAll('.bin').forEach(b=>b.disabled=true);
+  fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function next(){if(i===9){finish()}else{i++;render();window.scrollTo(0,0)}}
+function finish(){
+  show('end');const r=score/10;
+  $('title').textContent=r>=9?'🌟 분리수거 마스터!':r>=6?'👍 환경 지킴이':'🌱 조금만 더 연습해요';
+  $('sum').textContent='10문제 중 '+r+'문제 정답 · 점수 '+score+'점 · 지구 건강 '+health+'%';
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
